@@ -44,15 +44,25 @@ narrative with clear evidence and recommended next steps.
 
 See [PRD.md](PRD.md) for the full requirements, non-goals, and success criteria.
 
+## Documentation
+
+- [PRD.md](PRD.md): product problem, customers, users, MVP scope, and success criteria.
+- [docs/USER_FLOWS.md](docs/USER_FLOWS.md): actors, use-case model, journey map, and detailed flows.
+- [docs/USER_STORIES.md](docs/USER_STORIES.md): epics, story map, backlog, and traceability.
+- [docs/ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md): testable criteria for every major workflow.
+
 ## Repository layout
 
 ```text
 sentinelai/
-├── README.md      # Project overview
-├── PRD.md         # Product requirements document
-├── docs/          # Supporting documentation
-├── .gitignore     # Ignored files and directories
-└── LICENSE        # MIT license
+├── README.md                        # Project overview
+├── PRD.md                           # Product requirements document
+├── docs/
+│   ├── USER_FLOWS.md                # Journeys and use-case model
+│   ├── USER_STORIES.md              # Epics and user stories
+│   └── ACCEPTANCE_CRITERIA.md       # Workflow acceptance criteria
+├── .gitignore                       # Ignored files and directories
+└── LICENSE                          # MIT license
 ```
 
 ## Getting started
