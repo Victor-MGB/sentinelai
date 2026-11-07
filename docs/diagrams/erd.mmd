@@ -1,0 +1,509 @@
+erDiagram
+    ORGANIZATIONS ||--o{ MEMBERSHIPS : "has"
+    ORGANIZATIONS ||--o{ INVITATIONS : "issues"
+    ORGANIZATIONS ||--o{ TEAMS : "has"
+    ORGANIZATIONS ||--o{ PROJECTS : "owns"
+    ORGANIZATIONS ||--o{ API_KEYS : "owns"
+    ORGANIZATIONS ||--o{ INCIDENTS : "owns"
+    ORGANIZATIONS ||--o{ KNOWLEDGE_DOCUMENTS : "owns"
+    ORGANIZATIONS ||--o{ APPROVAL_REQUESTS : "owns"
+    ORGANIZATIONS |o--o{ SESSIONS : "scopes"
+    ORGANIZATIONS |o--o{ AUTH_TOKENS : "scopes"
+    ORGANIZATIONS ||--o{ AUDIT_EVENTS : "records"
+
+    USERS ||--o{ MEMBERSHIPS : "joins"
+    USERS |o--o{ INVITATIONS : "may receive"
+    USERS ||--o{ SESSIONS : "authenticates"
+    USERS ||--o{ AUTH_TOKENS : "receives"
+
+    MEMBERSHIPS ||--o{ TEAM_MEMBERSHIPS : "belongs"
+    MEMBERSHIPS ||--o{ INCIDENTS : "owns"
+    MEMBERSHIPS ||--o{ INCIDENT_NOTES : "writes"
+    MEMBERSHIPS ||--o{ RECOMMENDATION_FEEDBACK : "gives"
+    MEMBERSHIPS ||--o{ ASSISTANT_MESSAGES : "asks"
+    MEMBERSHIPS ||--o{ APPROVAL_REQUESTS : "requests"
+    MEMBERSHIPS ||--o{ APPROVAL_DECISIONS : "decides"
+    MEMBERSHIPS ||--o{ AUDIT_EVENTS : "acts"
+
+    TEAMS ||--o{ TEAM_MEMBERSHIPS : "includes"
+    TEAMS ||--o{ INVITATION_TEAMS : "scoped"
+    TEAMS ||--o{ PROJECTS : "owns"
+    TEAMS ||--o{ SERVICES : "owns"
+    TEAMS ||--o{ INCIDENTS : "owns"
+
+    INVITATIONS ||--o{ INVITATION_TEAMS : "grants"
+
+    PROJECTS ||--o{ ENVIRONMENTS : "contains"
+    PROJECTS ||--o{ SERVICES : "catalogs"
+    PROJECTS ||--o{ INCIDENTS : "scopes"
+    PROJECTS |o--o{ KNOWLEDGE_DOCUMENTS : "scopes"
+
+    ENVIRONMENTS ||--o{ API_KEYS : "scopes"
+    ENVIRONMENTS ||--o{ INCIDENTS : "scopes"
+
+    API_KEYS ||--o{ API_KEY_SCOPES : "grants"
+
+    SERVICES ||--o{ SERVICE_DEPENDENCIES : "upstream"
+    SERVICES ||--o{ SERVICE_DEPENDENCIES : "downstream"
+    SERVICES ||--o{ INCIDENT_SERVICES : "affected"
+    SERVICES |o--o{ INCIDENT_TIMELINE : "context"
+
+    INCIDENTS ||--o{ INCIDENT_TIMELINE : "has"
+    INCIDENTS ||--o{ INCIDENT_NOTES : "has"
+    INCIDENTS ||--o{ INCIDENT_SERVICES : "affects"
+    INCIDENTS ||--o{ RECOMMENDATIONS : "generates"
+    INCIDENTS ||--o{ ASSISTANT_MESSAGES : "contains"
+    INCIDENTS ||--o{ APPROVAL_REQUESTS : "requires"
+
+    RECOMMENDATIONS ||--o{ RECOMMENDATION_EVIDENCE : "cites"
+    RECOMMENDATIONS ||--o{ RECOMMENDATION_FEEDBACK : "receives"
+    KNOWLEDGE_CHUNKS |o--o{ RECOMMENDATION_EVIDENCE : "may be cited by"
+
+    KNOWLEDGE_DOCUMENTS ||--o{ KNOWLEDGE_CHUNKS : "chunks"
+
+    APPROVAL_REQUESTS ||--o{ APPROVAL_DECISIONS : "decided_by"
+
+    ORGANIZATIONS {
+        text id PK
+        text name
+        text slug UK
+        text status
+        text data_region
+        int log_retention_days
+        int metric_retention_days
+        int trace_retention_days
+        int incident_retention_days
+        int audit_retention_days
+        boolean ai_training_opt_in
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    USERS {
+        text id PK
+        text email UK
+        text name
+        text password_hash
+        text status
+        timestamptz email_verified_at
+        timestamptz last_login_at
+        text last_selected_org_id
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    SESSIONS {
+        text id PK
+        text org_id FK
+        text user_id FK
+        text token_hash UK
+        text csrf_token_hash
+        inet ip_address
+        text user_agent
+        timestamptz last_seen_at
+        timestamptz idle_expires_at
+        timestamptz absolute_expires_at
+        timestamptz revoked_at
+        timestamptz created_at
+    }
+
+    AUTH_TOKENS {
+        text id PK
+        text org_id FK
+        text user_id FK
+        text purpose
+        text token_hash UK
+        timestamptz expires_at
+        timestamptz consumed_at
+        timestamptz invalidated_at
+        timestamptz created_at
+    }
+
+    MEMBERSHIPS {
+        text id PK
+        text org_id FK
+        text user_id FK
+        text role
+        text status
+        timestamptz joined_at
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    INVITATIONS {
+        text id PK
+        text org_id FK
+        text invited_user_id FK
+        text email
+        text role
+        text token_hash UK
+        text status
+        text invited_by_membership_id FK
+        timestamptz expires_at
+        timestamptz accepted_at
+        timestamptz created_at
+    }
+
+    TEAMS {
+        text id PK
+        text org_id FK
+        text name
+        text slug
+        boolean is_default
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    TEAM_MEMBERSHIPS {
+        text id PK
+        text org_id FK
+        text team_id FK
+        text membership_id FK
+        text role
+        timestamptz created_at
+    }
+
+    INVITATION_TEAMS {
+        text org_id FK
+        text invitation_id PK
+        text team_id PK
+    }
+
+    PROJECTS {
+        text id PK
+        text org_id FK
+        text owning_team_id FK
+        text name
+        text key
+        text description
+        text status
+        jsonb retention_settings
+        jsonb notification_settings
+        timestamptz archived_at
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    ENVIRONMENTS {
+        text id PK
+        text org_id FK
+        text project_id FK
+        text name
+        text kind
+        text criticality
+        boolean is_protected
+        text status
+        timestamptz archived_at
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    API_KEYS {
+        text id PK
+        text org_id FK
+        text environment_id FK
+        text name
+        text key_prefix UK
+        text secret_hash
+        text status
+        timestamptz expires_at
+        timestamptz last_used_at
+        text created_by_membership_id FK
+        text rotated_from_key_id FK
+        timestamptz created_at
+        timestamptz revoked_at
+    }
+
+    API_KEY_SCOPES {
+        text org_id FK
+        text api_key_id PK
+        text scope PK
+    }
+
+    SERVICES {
+        text id PK
+        text org_id FK
+        text project_id FK
+        text owning_team_id FK
+        text name
+        text key
+        text tier
+        text description
+        text runbook_url
+        text repository_url
+        text dashboard_url
+        text discovery_source
+        boolean is_active
+        timestamptz last_seen_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    SERVICE_DEPENDENCIES {
+        text org_id FK
+        text service_id PK
+        text depends_on_service_id PK
+        text dependency_type
+        text criticality
+        timestamptz created_at
+    }
+
+    INCIDENTS {
+        text id PK
+        text org_id FK
+        text project_id FK
+        text environment_id FK
+        bigint number UK
+        text title
+        text summary
+        text severity
+        text status
+        text detection_source
+        text correlation_key
+        numeric correlation_confidence
+        text owning_team_id FK
+        text owner_membership_id FK
+        boolean is_unowned
+        text merged_into_incident_id FK
+        text split_from_incident_id FK
+        timestamptz first_signal_at
+        timestamptz opened_at
+        timestamptz acknowledged_at
+        timestamptz resolved_at
+        text resolution_category
+        text resolution_summary
+        int mttd_seconds
+        int mttr_seconds
+        int version
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    INCIDENT_TIMELINE {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text event_type
+        text signal_type
+        text source
+        text source_id
+        text dedupe_key UK
+        text service_id FK
+        text environment_id FK
+        text actor_type
+        text actor_membership_id FK
+        text title
+        text summary
+        timestamptz occurred_at
+        jsonb evidence
+        timestamptz created_at
+    }
+
+    INCIDENT_NOTES {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text author_membership_id FK
+        text body
+        text body_format
+        text timeline_event_id FK
+        timestamptz edited_at
+        timestamptz created_at
+        timestamptz deleted_at
+    }
+
+    INCIDENT_SERVICES {
+        text org_id FK
+        text incident_id PK
+        text service_id PK
+        text impact
+        boolean is_primary
+        timestamptz created_at
+    }
+
+    RECOMMENDATIONS {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text generation_id
+        int rank
+        text summary
+        text rationale
+        text confidence
+        text status
+        jsonb ranking_factors
+        jsonb next_steps
+        jsonb limitations
+        text validation_status
+        text model_provider
+        text model_name
+        text model_version
+        text prompt_version
+        text context_hash
+        text redaction_policy_version
+        timestamptz generated_at
+        timestamptz expires_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    RECOMMENDATION_EVIDENCE {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text recommendation_id FK
+        text evidence_type
+        text evidence_ref
+        text source_store
+        text source_id
+        text citation_label
+        text description
+        text excerpt
+        text knowledge_chunk_id FK
+        timestamptz occurred_at
+        boolean is_available
+        text unavailable_reason
+        timestamptz last_verified_at
+        jsonb metadata
+        timestamptz created_at
+    }
+
+    RECOMMENDATION_FEEDBACK {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text recommendation_id FK
+        text actor_membership_id FK
+        text decision
+        text reason
+        text corrected_summary
+        text corrected_root_cause
+        timestamptz superseded_at
+        text superseded_by_feedback_id FK
+        timestamptz created_at
+    }
+
+    ASSISTANT_MESSAGES {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text conversation_id
+        text parent_message_id FK
+        text role
+        text author_membership_id FK
+        text content
+        jsonb citations
+        jsonb tool_calls
+        text model_provider
+        text model_name
+        text model_version
+        text status
+        text error_code
+        jsonb token_usage
+        int latency_ms
+        timestamptz created_at
+        timestamptz completed_at
+    }
+
+    KNOWLEDGE_DOCUMENTS {
+        text id PK
+        text org_id FK
+        text project_id FK
+        text service_id FK
+        text document_type
+        text title
+        text source_type
+        text source_id
+        text source_url
+        text content_hash
+        int version
+        int index_version
+        text status
+        text sensitivity
+        text visibility
+        text_array allowed_team_ids
+        text created_by_membership_id FK
+        timestamptz indexed_at
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz deleted_at
+    }
+
+    KNOWLEDGE_CHUNKS {
+        text id PK
+        text org_id FK
+        text document_id FK
+        int document_version
+        int chunk_index
+        text heading
+        text content
+        text content_hash
+        int token_count
+        text search_vector
+        vector embedding
+        text embedding_model
+        text embedding_version
+        text status
+        text sensitivity
+        timestamptz superseded_at
+        timestamptz created_at
+    }
+
+    APPROVAL_REQUESTS {
+        text id PK
+        text org_id FK
+        text incident_id FK
+        text requester_membership_id FK
+        text approver_membership_id FK
+        text assigned_team_id FK
+        text action_type
+        jsonb action_payload
+        text risk_level
+        text status
+        text reason
+        text policy_version
+        timestamptz expires_at
+        text execution_status
+        jsonb execution_result
+        text idempotency_key UK
+        timestamptz executed_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    APPROVAL_DECISIONS {
+        text id PK
+        text org_id FK
+        text approval_request_id FK
+        text actor_membership_id FK
+        text decision
+        text reason
+        inet ip_address
+        text user_agent
+        timestamptz decided_at
+    }
+
+    AUDIT_EVENTS {
+        text id PK
+        text org_id
+        text actor_type
+        text actor_user_id
+        text actor_membership_id
+        text api_key_id
+        text action
+        text target_type
+        text target_id
+        text outcome
+        text request_id
+        text trace_id
+        inet ip_address
+        text user_agent
+        jsonb metadata
+        timestamptz occurred_at
+    }

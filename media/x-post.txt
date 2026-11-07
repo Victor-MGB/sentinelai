@@ -1,0 +1,1 @@
+SentinelAI foundation done: 14 flows, 95 stories, 133 acceptance criteria, full architecture, DB schema, API spec, verified dev env. Phase 2 backlog live. github.com/Victor-MGB/sentinelai

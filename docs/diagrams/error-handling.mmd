@@ -1,0 +1,24 @@
+flowchart TD
+    Start["HTTP request or background job"] --> Validate{"Schema and input valid?"}
+    Validate -->|No| E400["400 / 422<br/>Problem Details + field errors"]
+    Validate -->|Yes| Auth{"Authenticated and authorized?"}
+    Auth -->|No| E401["401 / 403<br/>No data leakage"]
+    Auth -->|Yes| Idem{"Idempotency key already processed?"}
+    Idem -->|Yes| Replay["Return stored response"]
+    Idem -->|No| Down{"Downstream dependency healthy?"}
+    Down -->|No| Retryable{"Retryable error?"}
+    Retryable -->|Yes| Backoff["Retry with exponential backoff<br/>and circuit breaker"]
+    Backoff --> Down
+    Retryable -->|No| E502["502 / 503 / 504<br/>Problem Details"]
+    Down -->|Yes| Execute["Execute use case"]
+    Execute --> Result{"Success?"}
+    Result -->|Yes| Success["2xx / 202<br/>audit + metrics"]
+    Result -->|No| Poison{"Poison message or permanent failure?"}
+    Poison -->|Yes| DLQ["Dead-letter queue<br/>alert + replay tooling"]
+    Poison -->|No| Backoff
+    E400 --> Log["Structured error log<br/>trace ID + code"]
+    E401 --> Log
+    E502 --> Log
+    DLQ --> Log
+    Success --> Done["Done"]
+    Replay --> Done

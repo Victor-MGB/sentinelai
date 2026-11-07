@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph Edge["Edge"]
+        DNS["DNS + CDN"]
+        WAF["WAF"]
+        LB["Load Balancer"]
+    end
+
+    subgraph Region["Cloud Region"]
+        subgraph AppSubnet["Private Application Subnet"]
+            Web1["Next.js Web<br/>instance 1..n"]
+            API1["Fastify API<br/>instance 1..n"]
+            Worker1["Worker Pool<br/>autoscaled"]
+            AI1["AI Service<br/>instance 1..n"]
+            MCP1["MCP Gateway<br/>instance 1..n"]
+            Obs["Observability<br/>logs, metrics, traces"]
+        end
+
+        subgraph DataSubnet["Private Data Subnet"]
+            PG[("PostgreSQL<br/>primary + standby")]
+            CH[("ClickHouse<br/>cluster")]
+            Redis[("Redis<br/>HA with persistence")]
+            S3[("Object Storage<br/>versioned + lifecycle")]
+        end
+
+        Secrets["Secrets Manager + KMS"]
+    end
+
+    subgraph External["External"]
+        LLM["LLM Provider"]
+        SaaS["Slack, PagerDuty,<br/>GitHub, Argo CD"]
+        Email["Email Provider"]
+    end
+
+    Users["Users"] --> DNS
+    DNS --> WAF
+    WAF --> LB
+    LB --> Web1
+    LB --> API1
+    Web1 --> API1
+    API1 --> PG
+    API1 --> CH
+    API1 --> Redis
+    API1 --> S3
+    Worker1 --> Redis
+    Worker1 --> PG
+    Worker1 --> CH
+    Worker1 --> S3
+    AI1 --> PG
+    AI1 --> LLM
+    MCP1 --> SaaS
+    Worker1 --> SaaS
+    Worker1 --> Email
+    PG --> Obs
+    API1 --> Obs
+    Worker1 --> Obs
+    AI1 --> Obs
+    API1 --> Secrets
+    Worker1 --> Secrets
+    AI1 --> Secrets

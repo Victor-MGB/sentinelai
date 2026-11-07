@@ -1,0 +1,58 @@
+flowchart TB
+    Browser["Browser"]
+    IngestClient["Ingestion Client<br/>OpenTelemetry Collector"]
+    Webhooks["External Webhooks<br/>GitHub, Argo CD, Alertmanager"]
+
+    subgraph Edge["Edge"]
+        CDN["CDN / WAF"]
+        LB["Load Balancer"]
+    end
+
+    subgraph App["Application Network"]
+        Web["Next.js Web<br/>App Router + Server Components"]
+        API["Fastify API<br/>REST + SSE"]
+        Worker["Background Workers<br/>BullMQ consumers"]
+        AI["AI Service<br/>orchestration + validation"]
+        MCP["MCP Gateway<br/>policy-enforced tools"]
+    end
+
+    subgraph Data["Data Network"]
+        PG[("PostgreSQL<br/>+ pgvector")]
+        CH[("ClickHouse<br/>telemetry")]
+        Redis[("Redis<br/>queues + cache")]
+        S3[("Object Storage<br/>raw payloads + exports")]
+    end
+
+    subgraph External["External Systems"]
+        Slack["Slack"]
+        Pager["PagerDuty"]
+        Email["Email"]
+        LLM["LLM Provider"]
+        SaaSTools["Observability / CI<br/>read APIs"]
+    end
+
+    Browser --> CDN
+    IngestClient --> LB
+    Webhooks --> LB
+    CDN --> LB
+    LB --> Web
+    LB --> API
+    Browser --> LB
+    Web --> API
+    API --> PG
+    API --> CH
+    API --> Redis
+    API --> S3
+    API --> AI
+    AI --> PG
+    AI --> MCP
+    AI --> LLM
+    MCP --> CH
+    MCP --> SaaSTools
+    Worker --> Redis
+    Worker --> PG
+    Worker --> CH
+    Worker --> S3
+    Worker --> Slack
+    Worker --> Pager
+    Worker --> Email

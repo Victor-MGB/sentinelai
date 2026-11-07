@@ -1,0 +1,68 @@
+flowchart LR
+    subgraph Producers["Producers"]
+        API["Fastify API"]
+        Ingest["Ingestion Gateway"]
+        Outbox["Outbox Relay"]
+        Scheduler["Scheduler"]
+    end
+
+    subgraph Queues["Redis / BullMQ Queues"]
+        Q1["telemetry.normalize"]
+        Q2["correlation.evaluate"]
+        Q3["ai.recommend"]
+        Q4["notifications.dispatch"]
+        Q5["integrations.sync"]
+        Q6["mcp.execute"]
+        Q7["rag.index"]
+        Q8["postmortem.generate"]
+        Q9["export.generate"]
+        Q10["maintenance.retention"]
+    end
+
+    subgraph Workers["Consumers"]
+        W1["Telemetry Workers"]
+        W2["Correlation Worker"]
+        W3["AI Workers"]
+        W4["Notification Worker"]
+        W5["Integration Workers"]
+        W6["MCP Workers"]
+        W7["RAG Indexer"]
+        W8["Document Workers"]
+        W9["Export Worker"]
+        W10["Maintenance Worker"]
+    end
+
+    subgraph Failure["Failure Handling"]
+        DLQ["Dead Letter Queues"]
+        Alert["Alerts and Replay Tooling"]
+    end
+
+    Ingest --> Q1
+    API --> Q2
+    API --> Q3
+    API --> Q8
+    API --> Q9
+    Outbox --> Q2
+    Outbox --> Q4
+    Outbox --> Q5
+    Outbox --> Q7
+    Scheduler --> Q10
+    API --> Q6
+    Q1 --> W1
+    Q2 --> W2
+    Q3 --> W3
+    Q4 --> W4
+    Q5 --> W5
+    Q6 --> W6
+    Q7 --> W7
+    Q8 --> W8
+    Q9 --> W9
+    Q10 --> W10
+    W1 --> Q2
+    W2 --> Q4
+    W2 --> Q3
+    W4 --> DLQ
+    W5 --> DLQ
+    W6 --> DLQ
+    W7 --> DLQ
+    DLQ --> Alert

@@ -50,6 +50,11 @@ See [PRD.md](PRD.md) for the full requirements, non-goals, and success criteria.
 - [docs/USER_FLOWS.md](docs/USER_FLOWS.md): actors, use-case model, journey map, and detailed flows.
 - [docs/USER_STORIES.md](docs/USER_STORIES.md): epics, story map, backlog, and traceability.
 - [docs/ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md): testable criteria for every major workflow.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): system architecture, API boundaries, modules, data, AI, security, and data flow.
+- [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md): entity model, tables, constraints, indexes, tenancy, and retention.
+- [docs/API_SPECIFICATION.md](docs/API_SPECIFICATION.md): REST contract, authentication, errors, pagination, and webhooks.
+- [docs/FOUNDATION_REVIEW.md](docs/FOUNDATION_REVIEW.md): foundation verification, findings, and Phase 2 scope.
+- [docs/diagrams/](docs/diagrams/): standalone Mermaid sources for the architecture and database diagrams.
 
 ## Repository layout
 
@@ -60,18 +65,51 @@ sentinelai/
 ├── docs/
 │   ├── USER_FLOWS.md                # Journeys and use-case model
 │   ├── USER_STORIES.md              # Epics and user stories
-│   └── ACCEPTANCE_CRITERIA.md       # Workflow acceptance criteria
+│   ├── ACCEPTANCE_CRITERIA.md       # Workflow acceptance criteria
+│   ├── ARCHITECTURE.md              # System architecture and data flow
+│   ├── DATABASE_SCHEMA.md           # Database entities, tables, and retention
+│   └── diagrams/                    # Mermaid architecture and ERD sources
+├── infra/postgres/init/             # Local PostgreSQL initialization SQL
+├── scripts/                         # Environment and connectivity checks
+├── compose.yaml                     # PostgreSQL and Redis for local development
+├── package.json                     # Root workspace and development scripts
+├── tsconfig.json                    # TypeScript configuration
+├── eslint.config.mjs                # ESLint configuration
+├── .prettierrc.json                 # Prettier configuration
+├── .env.example                     # Local environment template
 ├── .gitignore                       # Ignored files and directories
 └── LICENSE                          # MIT license
 ```
 
 ## Getting started
 
-There is no application code yet. To work with the documentation locally:
+There is no application code yet. The local development environment provides
+Node.js tooling, PostgreSQL with pgvector, and Redis.
+
+Prerequisites: Node.js 20+, npm 10+, Git, and Docker with Compose v2.
 
 ```bash
 git clone https://github.com/Victor-MGB/sentinelai.git
 cd sentinelai
+npm install
+npm run setup
+```
+
+`npm run setup` creates `.env` from `.env.example` when needed, starts
+PostgreSQL and Redis, and verifies configuration and connectivity. Local
+services bind to `localhost:55432` (PostgreSQL) and `localhost:56379` (Redis).
+Change the ports in `.env` if they conflict with existing services.
+
+Useful commands:
+
+```bash
+npm run infra:up      # Start PostgreSQL and Redis and wait for health
+npm run infra:down    # Stop services while preserving data
+npm run infra:reset   # Stop services and delete local volumes
+npm run verify        # Re-run environment, database, and Redis checks
+npm run check         # Typecheck, lint, and format check
+npm run lint:fix      # Apply ESLint fixes
+npm run format        # Apply Prettier formatting
 ```
 
 ## Contributing

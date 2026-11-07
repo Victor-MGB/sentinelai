@@ -1,0 +1,51 @@
+flowchart TB
+    subgraph Interface["Interface Layer"]
+        HTTP["HTTP Routes<br/>REST + SSE"]
+        Ingest["Ingestion Routes"]
+        WH["Webhook Routes"]
+        Consumers["Queue Consumers"]
+    end
+
+    subgraph Application["Application Layer"]
+        Identity["Identity and Access"]
+        Org["Organizations and Teams"]
+        Projects["Projects and Environments"]
+        Keys["API Keys"]
+        Telemetry["Telemetry and Search"]
+        Correlation["Correlation and Detection"]
+        Incidents["Incidents"]
+        AI["AI Orchestration"]
+        RAG["RAG and Knowledge"]
+        MCP["MCP Tool Gateway"]
+        Approvals["Approvals and Policy"]
+        Notify["Notifications and Integrations"]
+        Audit["Audit and Compliance"]
+    end
+
+    subgraph Domain["Domain Layer"]
+        Entities["Entities, Value Objects,<br/>State Machines, Domain Events"]
+        Ports["Ports and Interfaces"]
+    end
+
+    subgraph Infra["Infrastructure Layer"]
+        PG[("PostgreSQL")]
+        CH[("ClickHouse")]
+        Redis[("Redis / BullMQ")]
+        S3[("Object Storage")]
+        Ext["External APIs"]
+        LLM["LLM Provider"]
+    end
+
+    HTTP --> Application
+    Ingest --> Application
+    WH --> Application
+    Consumers --> Application
+    Application --> Domain
+    Domain --> Ports
+    Ports --> PG
+    Ports --> CH
+    Ports --> Redis
+    Ports --> S3
+    Ports --> Ext
+    Ports --> LLM
+    Application -.->|domain events| Consumers

@@ -1,0 +1,26 @@
+flowchart LR
+    subgraph NextApp["Next.js Application"]
+        Router["App Router<br/>route segments"]
+        RSC["Server Components<br/>auth shell + initial data"]
+        Client["Client Components<br/>interactive incident UI"]
+        Query["Client Data Layer<br/>typed queries + mutations"]
+        SSEClient["SSE Client<br/>live incident updates"]
+        Forms["Forms + Validation<br/>shared schemas"]
+        Boundaries["Error + Loading Boundaries"]
+        A11y["Accessibility Layer"]
+    end
+
+    API["Fastify API"]
+    Browser["Browser"]
+
+    Browser --> Router
+    Router --> RSC
+    Router --> Client
+    Router --> Boundaries
+    RSC --> API
+    Client --> Query
+    Query --> API
+    Client --> SSEClient
+    SSEClient --> API
+    Forms --> Query
+    Client --> A11y

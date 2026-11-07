@@ -1,0 +1,68 @@
+flowchart LR
+    subgraph Sources["Sources"]
+        OTel["OTel Collectors"]
+        Alerts["Alertmanager / Webhooks"]
+        Changes["GitHub / Argo CD"]
+        People["Users"]
+    end
+
+    subgraph Ingress["Ingress"]
+        Edge["CDN / WAF / LB"]
+        Web["Next.js Web"]
+        API["Fastify API"]
+        Ingest["Ingestion Gateway"]
+        WH["Webhook Handler"]
+    end
+
+    subgraph Processing["Processing"]
+        Queue[("Redis / BullMQ")]
+        LogWorker["Log Workers"]
+        Corr["Correlation Engine"]
+        AI["AI Service"]
+        Notify["Notification Worker"]
+    end
+
+    subgraph Storage["Storage"]
+        CH[("ClickHouse")]
+        PG[("PostgreSQL + pgvector")]
+        S3[("Object Storage")]
+        Cache[("Redis Cache")]
+    end
+
+    subgraph Outputs["Outputs"]
+        Slack["Slack"]
+        Pager["PagerDuty"]
+        Email["Email"]
+        UI["Incident UI"]
+    end
+
+    OTel --> Ingest
+    Alerts --> WH
+    Changes --> WH
+    People --> Edge
+    Edge --> Web
+    Edge --> API
+    Web --> API
+    Ingest --> Queue
+    WH --> Queue
+    API --> PG
+    API --> CH
+    API --> Cache
+    Queue --> LogWorker
+    LogWorker --> CH
+    LogWorker --> S3
+    LogWorker --> PG
+    LogWorker -->|emit event| Queue
+    Queue --> Corr
+    Corr --> PG
+    Corr -->|emit event| Queue
+    Corr -->|request| AI
+    AI --> PG
+    AI -->|emit event| Queue
+    Queue --> Notify
+    Notify --> Slack
+    Notify --> Pager
+    Notify --> Email
+    PG --> API
+    CH --> API
+    API --> UI

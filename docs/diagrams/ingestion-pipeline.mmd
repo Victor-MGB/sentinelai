@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    participant Client as Ingestion Client
+    participant Gateway as Fastify Ingestion Gateway
+    participant Redis as Redis / BullMQ
+    participant Worker as Log Worker
+    participant CH as ClickHouse
+    participant S3 as Object Storage
+    participant PG as PostgreSQL
+    participant Corr as Correlation Engine
+    participant Notify as Notification Worker
+    participant Ext as Slack / PagerDuty / Email
+
+    Client->>Gateway: POST /v1/ingest/logs with API key
+    Gateway->>Gateway: Authenticate, authorize scope, rate limit
+    Gateway->>Gateway: Validate batch and records
+    alt Invalid request
+        Gateway-->>Client: 401 / 403 / 413 / 422 / 429
+    else Accepted
+        Gateway->>S3: Store raw batch when oversized
+        Gateway->>Redis: Enqueue telemetry.normalize
+        Gateway-->>Client: 202 Accepted
+        Redis->>Worker: Deliver job
+        Worker->>Worker: Normalize, redact, enrich
+        Worker->>CH: Insert normalized logs
+        Worker->>PG: Update ingestion health
+        Worker->>Redis: Enqueue correlation.evaluate
+        Redis->>Corr: Deliver job
+        Corr->>PG: Create or update incident
+        Corr->>Redis: Enqueue notifications.dispatch
+        Redis->>Notify: Deliver job
+        Notify->>Ext: Send notifications
+    end

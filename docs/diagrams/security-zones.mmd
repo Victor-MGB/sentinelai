@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph Internet["Untrusted Internet"]
+        Users["Users"]
+        Ingest["Ingestion Clients"]
+        SaaS["External SaaS"]
+        LLM["LLM Provider"]
+    end
+
+    subgraph Edge["Edge Trust Zone"]
+        WAF["WAF / DDoS Protection"]
+        CDN["CDN"]
+        LB["Load Balancer"]
+    end
+
+    subgraph AppZone["Application Trust Zone - private"]
+        Web["Next.js Web"]
+        API["Fastify API"]
+        Workers["Background Workers"]
+        AI["AI Service"]
+        MCP["MCP Gateway"]
+    end
+
+    subgraph DataZone["Data Trust Zone - no public ingress"]
+        PG[("PostgreSQL")]
+        CH[("ClickHouse")]
+        Redis[("Redis")]
+        S3[("Object Storage")]
+    end
+
+    subgraph Egress["Restricted Egress Zone"]
+        Proxy["Egress Proxy / Allowlist"]
+        Secrets["Secrets Manager / KMS"]
+    end
+
+    Users --> WAF
+    Ingest --> WAF
+    SaaS --> WAF
+    WAF --> CDN
+    CDN --> LB
+    LB --> Web
+    LB --> API
+    Web --> API
+    API --> PG
+    API --> CH
+    API --> Redis
+    API --> S3
+    Workers --> PG
+    Workers --> CH
+    Workers --> Redis
+    Workers --> S3
+    AI --> PG
+    AI --> Proxy
+    MCP --> Proxy
+    Workers --> Proxy
+    Proxy --> LLM
+    Proxy --> SaaS
+    API --> Secrets
+    Workers --> Secrets
+    AI --> Secrets

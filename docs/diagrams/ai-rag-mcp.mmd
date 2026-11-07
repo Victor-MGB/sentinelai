@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    participant User as Responder
+    participant API as Fastify API
+    participant AI as AI Service
+    participant RAG as RAG Retriever
+    participant PG as PostgreSQL + pgvector
+    participant MCP as MCP Gateway
+    participant Tool as Allowlisted Tool
+    participant LLM as LLM Provider
+    participant Validator as Output Validator
+
+    User->>API: POST /v1/incidents/:id/recommendations
+    API->>AI: Generate recommendations with tenant and incident ID
+    AI->>PG: Load incident timeline and summaries
+    AI->>RAG: Retrieve relevant knowledge
+    RAG->>PG: Hybrid search with tenant and team filters
+    RAG-->>AI: Chunks with citation IDs
+    AI->>MCP: Optional read-only tool request
+    MCP->>MCP: Authorize tenant, role, tool, and arguments
+    MCP->>Tool: Execute with scoped credentials
+    Tool-->>MCP: Result
+    MCP-->>AI: Normalized and redacted result
+    AI->>LLM: Prompt with untrusted-data boundary
+    LLM-->>AI: Structured JSON output
+    AI->>Validator: Validate schema and evidence links
+    alt Evidence missing or invalid
+        Validator-->>AI: Reject ungrounded claims
+        AI->>LLM: Regenerate or return insufficient evidence
+    else Valid
+        Validator-->>AI: Accept
+        AI-->>API: Ranked hypotheses, next steps, and citations
+        API-->>User: REST response and SSE update
+    end
+    Note over AI,MCP: Write actions require the approval workflow and are not executed here

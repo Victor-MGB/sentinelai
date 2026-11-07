@@ -1,0 +1,47 @@
+flowchart TB
+    subgraph People["People"]
+        EM["Engineering Manager"]
+        BE["Backend Developer"]
+        DO["DevOps Engineer"]
+        SRE["Site Reliability Engineer"]
+        Admin["Organization Owner / Admin"]
+        Viewer["Viewer"]
+    end
+
+    subgraph Platform["SentinelAI Platform"]
+        SA["SentinelAI<br/>AI-assisted reliability platform"]
+    end
+
+    subgraph Sources["Telemetry and change sources"]
+        OTel["OpenTelemetry Collectors"]
+        Prom["Prometheus / Alertmanager"]
+        CICD["GitHub Actions / Argo CD"]
+        Generic["Generic Webhooks"]
+    end
+
+    subgraph Delivery["Notification and collaboration"]
+        Slack["Slack"]
+        Pager["PagerDuty"]
+        Email["Email Provider"]
+    end
+
+    subgraph AIExt["AI and identity"]
+        LLM["LLM Provider"]
+        IdP["Enterprise IdP<br/>post-MVP"]
+    end
+
+    EM --> SA
+    BE --> SA
+    DO --> SA
+    SRE --> SA
+    Admin --> SA
+    Viewer --> SA
+    OTel --> SA
+    Prom --> SA
+    CICD --> SA
+    Generic --> SA
+    SA --> Slack
+    SA --> Pager
+    SA --> Email
+    SA --> LLM
+    IdP -.-> SA
