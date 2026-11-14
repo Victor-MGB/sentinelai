@@ -6,8 +6,8 @@ and deployment events into a single incident view, then produces evidence-backed
 root-cause hypotheses so teams can detect, diagnose, and resolve production
 issues faster.
 
-> Status: Pre-implementation. The product scope is defined in
-> [PRD.md](PRD.md).
+> Status: Phase 2 implementation. The frontend application shell and backend
+> foundation are running. The product scope is defined in [PRD.md](PRD.md).
 
 ## Why SentinelAI
 
@@ -69,9 +69,23 @@ sentinelai/
 │   ├── ARCHITECTURE.md              # System architecture and data flow
 │   ├── DATABASE_SCHEMA.md           # Database entities, tables, and retention
 │   └── diagrams/                    # Mermaid architecture and ERD sources
+├── apps/
+│   ├── api/                         # Fastify API and BullMQ worker
+│   │   ├── drizzle/                 # Generated PostgreSQL migrations
+│   │   ├── scripts/                 # Persistence and queue verification
+│   │   ├── test/                    # Vitest fixtures, unit, and integration tests
+│   │   ├── Dockerfile               # API and worker container image
+│   │   └── src/                     # Config, infrastructure, modules, plugins
+│   └── web/                         # Next.js App Router frontend
+│       ├── app/                     # Routes, layouts, loading and error boundaries
+│       ├── components/              # Shared UI primitives and layout components
+│       ├── features/                # Feature-scoped client components
+│       ├── lib/                     # Navigation, sample data, and utilities
+│       └── Dockerfile               # Frontend container image
 ├── infra/postgres/init/             # Local PostgreSQL initialization SQL
 ├── scripts/                         # Environment and connectivity checks
-├── compose.yaml                     # PostgreSQL and Redis for local development
+├── .github/workflows/ci.yml         # Lint, typecheck, and test pipeline
+├── compose.yaml                     # PostgreSQL, Redis, API, worker, and web stack
 ├── package.json                     # Root workspace and development scripts
 ├── tsconfig.json                    # TypeScript configuration
 ├── eslint.config.mjs                # ESLint configuration
@@ -83,8 +97,9 @@ sentinelai/
 
 ## Getting started
 
-There is no application code yet. The local development environment provides
-Node.js tooling, PostgreSQL with pgvector, and Redis.
+The repository contains a Next.js frontend in `apps/web`, a Fastify API and
+BullMQ worker in `apps/api`, and the local development environment for
+PostgreSQL with pgvector and Redis.
 
 Prerequisites: Node.js 20+, npm 10+, Git, and Docker with Compose v2.
 
@@ -93,6 +108,10 @@ git clone https://github.com/Victor-MGB/sentinelai.git
 cd sentinelai
 npm install
 npm run setup
+npm run db:migrate
+npm run dev:api
+npm run dev:worker
+npm run dev:web
 ```
 
 `npm run setup` creates `.env` from `.env.example` when needed, starts
@@ -100,23 +119,61 @@ PostgreSQL and Redis, and verifies configuration and connectivity. Local
 services bind to `localhost:55432` (PostgreSQL) and `localhost:56379` (Redis).
 Change the ports in `.env` if they conflict with existing services.
 
+`npm run dev:api` starts the Fastify API at `http://localhost:3001` with health
+checks under `/api/v1/health` and interactive OpenAPI documentation at
+`http://localhost:3001/docs`. `npm run dev:worker` processes BullMQ jobs and
+handles retries plus dead-letter delivery. `npm run dev:web` starts the Next.js
+frontend at `http://localhost:3000`; the demo workspace is available at
+`http://localhost:3000/app/acme`.
+
+To run the entire production-style stack in containers instead of local Node
+processes:
+
+```bash
+npm run stack:up      # Build and start PostgreSQL, Redis, migrations, API, worker, and web
+npm run stack:logs    # Follow logs from every service
+npm run stack:down    # Stop the stack while preserving data
+```
+
+The stack is available at `http://localhost:3000` (web), `http://localhost:3001`
+(API), and `http://localhost:3001/docs` (OpenAPI UI). The migration service runs
+once before the API and worker start. If those ports are already in use, override
+the host mappings: `API_PORT=3101 WEB_PORT=3100 npm run stack:up`.
+
+Integration tests require PostgreSQL and Redis. Run `npm run infra:up` and
+`npm run db:migrate` before the first integration test run.
+
 Useful commands:
 
 ```bash
+npm run dev:api       # Start the Fastify API in development mode
+npm run dev:worker    # Start the BullMQ worker in development mode
+npm run dev:web       # Start the Next.js frontend in development mode
+npm run db:generate   # Generate a Drizzle migration from the schema
+npm run db:migrate    # Apply pending Drizzle migrations
+npm run test:unit     # Run unit tests with Vitest
+npm run test:integration # Run integration tests against local PostgreSQL and Redis
+npm run test:coverage # Run the test suite with coverage
+npm run verify:persistence # Verify PostgreSQL persistence and transactions
+npm run verify:queue  # Verify queue processing, retries, and dead letters
+npm run build:web     # Build the frontend for production
+npm run lint:web      # Lint the frontend with Next.js ESLint rules
+npm run typecheck:web # Type-check the frontend
 npm run infra:up      # Start PostgreSQL and Redis and wait for health
 npm run infra:down    # Stop services while preserving data
 npm run infra:reset   # Stop services and delete local volumes
+npm run stack:up      # Build and start the complete Docker Compose stack
 npm run verify        # Re-run environment, database, and Redis checks
-npm run check         # Typecheck, lint, and format check
+npm run check         # Typecheck, lint, and format check for all workspaces
 npm run lint:fix      # Apply ESLint fixes
 npm run format        # Apply Prettier formatting
 ```
 
 ## Contributing
 
-Contributions will follow the workflow documented in `docs/` once the project
-moves beyond the planning stage. For now, open an issue to discuss proposed
-changes to the product requirements.
+Contributions follow the workflow documented in `docs/`. Use `npm run check`
+before opening a pull request, and keep acceptance criteria as the source of
+truth for story completion.
 
 ## License
 

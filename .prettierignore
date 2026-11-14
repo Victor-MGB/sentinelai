@@ -1,4 +1,5 @@
 node_modules
+.next
 dist
 build
 coverage
@@ -7,3 +8,4 @@ test-results
 package-lock.json
 *.md
 docs
+apps/web/next-env.d.ts
